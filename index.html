@@ -1,0 +1,547 @@
+<!DOCTYPE ahtml>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révision d'Histoire: Flashcards Interactives</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* 3D Flip Styles */
+        .card-face {
+            backface-visibility: hidden;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        .card-container.flipped .card-front {
+            transform: rotateY(180deg);
+        }
+        .card-container.flipped .card-back {
+            transform: rotateY(0deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Ensure only one side is visible at a time */
+            backface-visibility: hidden; 
+        }
+        .card-back {
+            transform: rotateY(-180deg);
+        }
+        /* Custom opacity for translations */
+        .translation {
+            opacity: 0.5;
+            font-size: 0.875rem; /* sm text */
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto w-full">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b-4 border-indigo-600 pb-2 text-center">
+            📚 Fiches de Révision Historique pour l'Examen
+        </h1>
+
+        <!-- Navigation Tabs -->
+        <div id="nav-tabs" class="flex flex-wrap justify-center gap-2 mb-8 p-3 bg-white rounded-xl shadow-lg">
+            <!-- Buttons will be populated here -->
+        </div>
+
+        <!-- Single Flashcard Display -->
+        <div class="flex flex-col items-center">
+            
+            <!-- Progress Indicator above the card -->
+            <p id="progress-indicator" class="mb-4 text-gray-600 font-medium"></p>
+
+            <div id="card-display-area" class="w-full max-w-lg h-[400px] mb-8 relative">
+                <!-- Card Container (dynamically populated) -->
+            </div>
+
+            <!-- Card Controls -->
+            <div id="card-controls" class="flex justify-center gap-4">
+                <button id="prev-btn" class="px-8 py-3 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition shadow-md disabled:opacity-50" disabled>
+                    &larr; Précédent
+                </button>
+                <button id="next-btn" class="px-8 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition shadow-md">
+                    Suivant &rarr;
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Modal for Detailed Explanation -->
+    <div id="explanation-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-2xl font-bold text-indigo-700">Explication Détaillée</h2>
+                <select id="language-selector" class="p-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="fr">Français</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            
+            <div id="modal-content" class="text-gray-700 leading-relaxed space-y-4">
+                <!-- Detailed content goes here -->
+            </div>
+            
+            <button onclick="closeModal()" class="mt-6 w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg">
+                Fermer / Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const flashcardData = {
+            "Byzance: Pouvoir Impérial et Christianisme Orthodoxe": [
+                {
+                    q_fr: "Quel est le titre de l'Empereur byzantin et quelle est la nature de son pouvoir ?",
+                    q_en: "What is the title of the Byzantine Emperor and what is the nature of his power?",
+                    a_fr: "Son titre est **Basileus**. Son pouvoir est une **théocratie** (droit divin).",
+                    a_en: "His title is **Basileus**. His power is a **theocracy** (divine right).",
+                    doc_ref: "Document 1", page_ref: "p. 5",
+                    a_detailed_fr: "L'Empereur est appelé **Basileus**, ce qui signifie 'roi' ou 'souverain'. Son pouvoir était une **théocratie** : il était considéré comme le représentant direct de **Dieu** sur Terre. Cela lui donnait une autorité absolue non seulement sur l'État, mais aussi sur l'Église (un système appelé césaropapisme).",
+                    a_detailed_en: "The Emperor was called **Basileus**, meaning 'king' or 'sovereign'. His power was a **theocracy**: he was considered the direct representative of **God** on Earth. This gave him absolute authority not only over the State but also over the Church (a system called Caesaropapism). "
+                },
+                {
+                    q_fr: "Décrivez la cérémonie de la proskynèse.",
+                    q_en: "Describe the ceremony of proskynesis.",
+                    a_fr: "C'est l'acte de **prostration** (s'incliner très bas) devant le Basileus pour symboliser son caractère sacré.",
+                    a_en: "It is the act of **prostration** (bowing very low) before the Basileus to symbolize his sacred nature.",
+                    doc_ref: "Document 1", page_ref: "p. 6",
+                    a_detailed_fr: "La proskynèse était une cérémonie formelle où les sujets devaient se prosterner, c'est-à-dire se jeter au sol, devant l'Empereur. Cet acte n'était pas seulement un signe de respect, mais une reconnaissance de sa supériorité et de son pouvoir divin. Personne n'était autorisé à regarder le Basileus directement en face.",
+                    a_detailed_en: "Proskynesis was a formal ceremony where subjects had to prostrate themselves, meaning to cast themselves on the ground, before the Emperor. This act was not just a sign of respect, but an acknowledgment of his superiority and divine power. No one was allowed to look the Basileus directly in the face."
+                },
+                {
+                    q_fr: "Quel est le rôle de la loi dans l'Empire byzantin ?",
+                    q_en: "What is the role of law in the Byzantine Empire?",
+                    a_fr: "La loi est basée sur le **Corpus Juris Civilis** (Code de Justinien). L'Empereur est le législateur.",
+                    a_en: "The law is based on the **Corpus Juris Civilis** (Code of Justinian). The Emperor is the lawgiver.",
+                    doc_ref: "Document 2", page_ref: "p. 10",
+                    a_detailed_fr: "Le droit était extrêmement important. L'Empereur Justinien avait fait compiler toutes les lois romaines dans le **Corpus Juris Civilis**. Ce code a servi de base légale pour l'Empire pendant des siècles et a fait de l'Empereur le gardien et le créateur des lois, assurant l'ordre et la centralisation.",
+                    a_detailed_en: "Law was extremely important. Emperor Justinian had compiled all Roman laws into the **Corpus Juris Civilis**. This code served as the legal basis for the Empire for centuries and established the Emperor as the guardian and creator of the laws, ensuring order and centralization."
+                },
+                {
+                    q_fr: "Qu'est-ce que l'Église Orthodoxe et quel est le rôle du Patriarche ?",
+                    q_en: "What is the Orthodox Church and what is the role of the Patriarch?",
+                    a_fr: "C'est l'Église de l'Est. Le **Patriarche** est le chef spirituel, mais nommé par l'Empereur.",
+                    a_en: "It is the Church of the East. The **Patriarch** is the spiritual leader, but appointed by the Emperor.",
+                    doc_ref: "Document 2", page_ref: "p. 12",
+                    a_detailed_fr: "L'Église Orthodoxe (ou d'Orient) est la branche du christianisme centrée à Constantinople. Le chef spirituel est le **Patriarche de Constantinople**. Cependant, contrairement à l'Occident, le Basileus (Empereur) nommait le Patriarche, ce qui montre l'union étroite du pouvoir temporel et spirituel (césaropapisme).",
+                    a_detailed_en: "The Orthodox Church (or Eastern Church) is the branch of Christianity centered in Constantinople. The spiritual leader is the **Patriarch of Constantinople**. However, unlike in the West, the Basileus (Emperor) appointed the Patriarch, demonstrating the tight union of temporal and spiritual power (Caesaropapism). [Image of the Hagia Sophia in Constantinople]"
+                }
+            ],
+            "Byzance: Menaces, Expansion et Chute": [
+                {
+                    q_fr: "Quel événement majeur en 1054 a divisé la Chrétienté ?",
+                    q_en: "What major event in 1054 divided Christianity?",
+                    a_fr: "Le **Schisme d'Orient**, séparant les Églises Orthodoxe (Est) et Catholique (Ouest).",
+                    a_en: "The **Great Schism**, separating the Orthodox (East) and Catholic (West) Churches.",
+                    doc_ref: "Document 3", page_ref: "p. 15",
+                    a_detailed_fr: "Le Schisme de 1054 a formalisé la séparation entre le christianisme d'Occident (obéissant au Pape à Rome) et le christianisme d'Orient (obéissant au Patriarche à Constantinople). Les désaccords portaient sur la doctrine religieuse et, surtout, sur la question de savoir si le Pape de Rome avait l'autorité suprême sur toute la Chrétienté.",
+                    a_detailed_en: "The Great Schism of 1054 formalized the separation between Western Christianity (obeying the Pope in Rome) and Eastern Christianity (obeying the Patriarch in Constantinople). Disagreements focused on religious doctrine and, critically, whether the Pope of Rome had supreme authority over all Christendom. "
+                },
+                {
+                    q_fr: "Comment Byzance gérait-elle les Slaves et Bulgares au Nord ?",
+                    q_en: "How did Byzantium manage the Slavs and Bulgars in the North?",
+                    a_fr: "Par la **force** (guerres), la **diplomatie** et la **christianisation** (alphabet Cyrillique).",
+                    a_en: "Through **force** (wars), **diplomacy**, and **Christianization** (Cyrillic alphabet).",
+                    doc_ref: "Document 3", page_ref: "p. 16",
+                    a_detailed_fr: "Byzance utilisait une stratégie combinée. Après avoir combattu ces peuples, l'Empire envoyait des missionnaires (comme Cyrille et Méthode) pour les convertir au christianisme orthodoxe. Cette conversion, souvent accompagnée de l'adoption de l'alphabet Cyrillique, permettait d'intégrer culturellement et politiquement ces peuples dans la sphère d'influence byzantine, les rendant moins menaçants.",
+                    a_detailed_en: "Byzantium employed a combined strategy. After fighting these peoples, the Empire sent missionaries (like Cyril and Methodius) to convert them to Orthodox Christianity. This conversion, often accompanied by the adoption of the Cyrillic alphabet, allowed for the cultural and political integration of these peoples into the Byzantine sphere of influence, making them less threatening."
+                },
+                {
+                    q_fr: "Quelles sont les deux causes principales de l'affaiblissement de l'Empire avant 1453 ?",
+                    q_en: "What are the two main causes of the Empire's weakening before 1453?",
+                    a_fr: "Les Turcs Seldjoukides (défaite de Manzikert, 1071) et le **Sac de Constantinople par les Croisés en 1204**.",
+                    a_en: "The Seljuk Turks (defeat at Manzikert, 1071) and the **Sack of Constantinople by the Crusaders in 1204**.",
+                    doc_ref: "Document 4", page_ref: "p. 19",
+                    a_detailed_fr: "La première grande cause est l'avancée des Turcs Seldjoukides en Asie Mineure, surtout après la défaite de Manzikert en 1071. La seconde cause, et la plus dévastatrice, fut le **Sac de Constantinople en 1204** par les Croisés de la Quatrième Croisade. Les Chrétiens d'Occident ont pillé la ville, affaiblissant l'Empire au point qu'il ne s'en est jamais vraiment remis.",
+                    a_detailed_en: "The first major cause was the advance of the Seljuk Turks in Asia Minor, especially after the defeat at Manzikert in 1071. The second, and most devastating cause, was the **Sack of Constantinople in 1204** by the Crusaders of the Fourth Crusade. Western Christians looted the city, weakening the Empire to the point that it never truly recovered. "
+                },
+                {
+                    q_fr: "Qui a conquis Constantinople et quand ?",
+                    q_en: "Who conquered Constantinople and when?",
+                    a_fr: "**Mehmet II (Sultan Ottoman)** en **1453**.",
+                    a_en: "**Mehmed II (Ottoman Sultan)** in **1453**.",
+                    doc_ref: "Document 4", page_ref: "p. 21",
+                    a_detailed_fr: "La ville de Constantinople est tombée aux mains du Sultan ottoman **Mehmet II** en 1453. Cette conquête marque la fin définitive de l'Empire Romain d'Orient (Byzance) et le transfert de sa capitale, renommée Istanbul, à l'Empire Ottoman.",
+                    a_detailed_en: "The city of Constantinople fell to the Ottoman Sultan **Mehmed II** in 1453. This conquest marked the definitive end of the Eastern Roman Empire (Byzantium) and the transfer of its capital, renamed Istanbul, to the Ottoman Empire."
+                }
+            ],
+            "Occident: L'Héritage Romain et les Royaumes Barbares": [
+                {
+                    q_fr: "Quel peuple barbare fonde le Royaume des Francs ?",
+                    q_en: "Which barbarian people founded the Kingdom of the Franks?",
+                    a_fr: "Les **Francs Saliens**, menés par Clovis.",
+                    a_en: "The **Salien Franks**, led by Clovis.",
+                    doc_ref: "Document 5", page_ref: "p. 25",
+                    a_detailed_fr: "Le Royaume des Francs a été fondé par les Francs Saliens. Leur chef le plus célèbre, **Clovis**, a réussi à unifier les tribus franques et à vaincre les autres peuples barbares (comme les Alamans et les Wisigoths) pour étendre son royaume sur une grande partie de l'ancienne Gaule.",
+                    a_detailed_en: "The Kingdom of the Franks was founded by the Salian Franks. Their most famous leader, **Clovis**, succeeded in unifying the Frankish tribes and defeating other barbarian peoples (such as the Alamanni and Visigoths) to extend his kingdom over a large part of ancient Gaul."
+                },
+                {
+                    q_fr: "Quel événement clé assure à Clovis le soutien des Gallo-Romains ?",
+                    q_en: "What key event secured Clovis the support of the Gallo-Romans?",
+                    a_fr: "Son **baptême** (vers 496) à Reims. Il est le seul roi barbare catholique.",
+                    a_en: "His **baptism** (around 496) in Reims. He is the only Catholic barbarian king.",
+                    doc_ref: "Document 5", page_ref: "p. 27",
+                    a_detailed_fr: "Le baptême de Clovis (vers 496) a été un tournant politique majeur. En se convertissant au christianisme de Nicée (le catholicisme) au lieu de l'arianisme (pratiqué par d'autres barbares), il a obtenu le soutien immédiat de l'Église et des Gallo-Romains (la majorité chrétienne de la population), facilitant l'unification de son royaume.",
+                    a_detailed_en: "Clovis's baptism (around 496) was a major political turning point. By converting to Nicene Christianity (Catholicism) instead of Arianism (practiced by other barbarians), he gained the immediate support of the Church and the Gallo-Romans (the Christian majority of the population), facilitating the unification of his kingdom. "
+                },
+                {
+                    q_fr: "Qui sont les Mérovingiens ?",
+                    q_en: "Who were the Merovingians?",
+                    a_fr: "La dynastie fondée par Clovis, souvent surnommés les 'rois fainéants' à la fin.",
+                    a_en: "The dynasty founded by Clovis, often nicknamed the 'do-nothing kings' at the end.",
+                    doc_ref: "Document 6", page_ref: "p. 30",
+                    a_detailed_fr: "Les Mérovingiens sont la première dynastie royale des Francs, descendants de Clovis. Vers la fin de leur règne (VIIe et VIIIe siècles), leur pouvoir s'est affaibli, et ce sont les Maires du Palais qui ont réellement exercé le pouvoir, d'où le surnom de 'rois fainéants' donné aux derniers Mérovingiens.",
+                    a_detailed_en: "The Merovingians were the first royal dynasty of the Franks, descendants of Clovis. Towards the end of their reign (7th and 8th centuries), their power weakened, and it was the Mayors of the Palace who truly exercised power, hence the nickname 'do-nothing kings' given to the later Merovingians."
+                }
+            ],
+            "Occident: Charlemagne et la Renaissance Carolingienne": [
+                {
+                    q_fr: "Qui a mis fin à la dynastie mérovingienne et fondé la dynastie carolingienne ?",
+                    q_en: "Who ended the Merovingian dynasty and founded the Carolingian dynasty?",
+                    a_fr: "**Pépin le Bref** en 751, avec l'accord du Pape.",
+                    a_en: "**Pepin the Short** in 751, with the Pope's agreement.",
+                    doc_ref: "Document 7", page_ref: "p. 35",
+                    a_detailed_fr: "**Pépin le Bref**, qui était Maire du Palais, a déposé le dernier roi mérovingien (Childéric III) et s'est fait sacrer roi en 751. Ce coup d'État, validé par le Pape, a fondé la dynastie carolingienne et a créé un lien sacré entre le nouveau roi et l'Église, un modèle durable pour la monarchie française.",
+                    a_detailed_en: "**Pepin the Short**, who was Mayor of the Palace, deposed the last Merovingian king (Childeric III) and was crowned king in 751. This coup d'état, validated by the Pope, founded the Carolingian dynasty and created a sacred link between the new king and the Church, a lasting model for the French monarchy."
+                },
+                {
+                    q_fr: "Pourquoi le couronnement de Charlemagne en 800 est-il crucial ?",
+                    q_en: "Why is Charlemagne's coronation in 800 crucial?",
+                    a_fr: "Il restaure l'idée d'un **Empire d'Occident** et lie le roi au Pape.",
+                    a_en: "It restores the idea of a **Western Empire** and links the king to the Pope.",
+                    doc_ref: "Document 7", page_ref: "p. 38",
+                    a_detailed_fr: "Le couronnement de Charlemagne comme Empereur d'Occident par le Pape Léon III à Rome le jour de Noël 800 est l'événement le plus important. Il marque la résurrection de l'Empire Romain en Occident, appelé plus tard le Saint-Empire Romain Germanique. Cela renforce l'idée que le pouvoir impérial est donné par Dieu et consolide l'alliance politique et religieuse entre les Francs et la papauté. ",
+                    a_detailed_en: "Charlemagne's coronation as Emperor of the West by Pope Leo III in Rome on Christmas Day 800 is the most important event. It marks the resurrection of the Roman Empire in the West, later called the Holy Roman Empire. This reinforces the idea that imperial power is given by God and consolidates the political and religious alliance between the Franks and the Papacy."
+                },
+                {
+                    q_fr: "Quel est le nom de la capitale de l'Empire de Charlemagne ?",
+                    q_en: "What is the name of the capital of Charlemagne's Empire?",
+                    a_fr: "**Aix-la-Chapelle** (Aachen).",
+                    a_en: "**Aix-la-Chapelle** (Aachen).",
+                    doc_ref: "Document 8", page_ref: "p. 40",
+                    a_detailed_fr: "La capitale de l'Empire Carolingien était **Aix-la-Chapelle** (Aachen, en Allemagne actuelle). Charlemagne y a établi son palais principal et sa chapelle palatine, qui est un chef-d'œuvre architectural. C'était le centre administratif et culturel de son vaste empire.",
+                    a_detailed_en: "The capital of the Carolingian Empire was **Aix-la-Chapelle** (Aachen, in modern Germany). Charlemagne established his main palace and his Palatine Chapel there, which is an architectural masterpiece. It was the administrative and cultural center of his vast empire."
+                },
+                {
+                    q_fr: "Quel est le rôle des *Missi Dominici* ?",
+                    q_en: "What is the role of the *Missi Dominici*?",
+                    a_fr: "Ce sont les 'envoyés du maître' qui inspectaient les comtés et appliquaient les lois impériales.",
+                    a_en: "They are the 'envoys of the master' who inspected the counties and enforced imperial laws.",
+                    doc_ref: "Document 8", page_ref: "p. 42",
+                    a_detailed_fr: "Les *Missi Dominici* (littéralement 'envoyés du seigneur') étaient des fonctionnaires envoyés par Charlemagne pour inspecter les différentes régions de l'Empire. Ils agissaient toujours par paires (un laïc et un ecclésiastique) pour s'assurer que les lois impériales, appelées Capitulaires, étaient bien respectées par les comtes locaux. C'était un outil clé de contrôle centralisé.",
+                    a_detailed_en: "The *Missi Dominici* (literally 'envoys of the lord') were officials sent by Charlemagne to inspect the different regions of the Empire. They always operated in pairs (one layperson and one cleric) to ensure that the imperial laws, called Capitularies, were properly respected by local counts. It was a key tool for centralized control."
+                },
+                {
+                    q_fr: "Quelle est l'importance de l'École du Palais ?",
+                    q_en: "What is the importance of the Palace School?",
+                    a_fr: "C'est le centre de la **Renaissance Carolingienne**, qui vise à réformer l'écriture (minuscule caroline).",
+                    a_en: "It is the center of the **Carolingian Renaissance**, aiming to reform writing (Carolingian minuscule).",
+                    doc_ref: "Document 9", page_ref: "p. 45",
+                    a_detailed_fr: "L'École du Palais, dirigée par le savant Alcuin, était un centre intellectuel. Elle a dirigé la **Renaissance Carolingienne**, un mouvement pour améliorer l'éducation, standardiser la liturgie et, surtout, réformer l'écriture en créant la **minuscule caroline**, une écriture claire et lisible qui est la base de nos lettres modernes.",
+                    a_detailed_en: "The Palace School, led by the scholar Alcuin, was an intellectual center. It spearheaded the **Carolingian Renaissance**, a movement to improve education, standardize liturgy, and, most importantly, reform writing by creating the **Carolingian minuscule**, a clear and readable script that is the basis of our modern letters."
+                },
+                {
+                    q_fr: "Quelle est la conséquence territoriale majeure du Traité de Verdun (843) ?",
+                    q_en: "What is the major territorial consequence of the Treaty of Verdun (843)?",
+                    a_fr: "Le **partage** de l'Empire Carolingien entre les trois petits-fils de Charlemagne.",
+                    a_en: "The **partition** of the Carolingian Empire among Charlemagne's three grandsons.",
+                    doc_ref: "Document 9", page_ref: "p. 47",
+                    a_detailed_fr: "Le Traité de Verdun en 843 est la conséquence de la guerre entre les petits-fils de Charlemagne. Il a divisé l'Empire en trois royaumes distincts : la Francie Occidentale (future France), la Francie Orientale (future Allemagne) et la Lotharingie (une bande centrale). Ce partage marque le début de la fin de l'unité carolingienne et la création des États modernes en Europe occidentale. [Image of the Treaty of Verdun map]",
+                    a_detailed_en: "The Treaty of Verdun in 843 resulted from the war between Charlemagne's grandsons. It divided the Empire into three distinct kingdoms: West Francia (future France), East Francia (future Germany), and Middle Francia (a central strip). This partition marks the beginning of the end of Carolingian unity and the creation of the modern states in Western Europe."
+                },
+            ],
+            "La Féodalité: Société et Pouvoir": [
+                {
+                    q_fr: "Définissez la féodalité.",
+                    q_en: "Define feudalism.",
+                    a_fr: "C'est l'organisation sociale et politique basée sur les **liens personnels** (suzerain/vassal) entre nobles.",
+                    a_en: "It is the social and political organization based on **personal ties** (suzerain/vassal) between nobles.",
+                    doc_ref: "Document 10", page_ref: "p. 50",
+                    a_detailed_fr: "La féodalité est le système politique et social qui se développe en Occident après la chute de l'Empire Carolingien (IXe-XIIIe siècles). L'autorité centrale ayant disparu, le pouvoir est passé aux seigneurs locaux. Il est basé sur un réseau de **liens personnels** entre un seigneur (suzerain) qui accorde une terre (fief) et un autre noble (vassal) qui lui jure fidélité et service (militaire surtout).",
+                    a_detailed_en: "Feudalism is the political and social system that developed in the West after the fall of the Carolingian Empire (9th-13th centuries). With central authority gone, power passed to local lords. It is based on a network of **personal ties** between a lord (suzerain) who grants land (fief) and another noble (vassal) who swears fidelity and service (mainly military) to him."
+                },
+                {
+                    q_fr: "Qu'est-ce que l'hommage et la foi ?",
+                    q_en: "What are 'homage' and 'fealty'?",
+                    a_fr: "L'**hommage** est l'acte par lequel le vassal se donne. La **foi** est le serment religieux de fidélité.",
+                    "a_en": "**Homage** is the act by which the vassal gives himself. **Fealty** is the religious oath of fidelity.",
+                    doc_ref: "Document 10", page_ref: "p. 52",
+                    a_detailed_fr: "L'hommage et la foi sont les deux étapes de la cérémonie féodale. L'**hommage** est l'acte par lequel le vassal met ses mains dans celles du suzerain, reconnaissant qu'il devient son 'homme'. La **foi** est le serment prononcé sur des objets sacrés (comme la Bible ou des reliques), promettant fidélité et service, ce qui rend la rupture du lien très grave.",
+                    a_detailed_en: "Homage and fealty are the two steps of the feudal ceremony. **Homage** is the act by which the vassal places his hands in those of the suzerain, acknowledging that he becomes his 'man'. **Fealty** is the oath sworn on sacred objects (like the Bible or relics), promising fidelity and service, which makes breaking the bond very serious."
+                },
+                {
+                    q_fr: "Quelles sont les obligations du vassal envers son seigneur ?",
+                    q_en: "What are the vassal's obligations to his lord?",
+                    a_fr: "L'**aide** (militaire et financière) et le **conseil** (assister aux tribunaux).",
+                    "a_en": "**Aid** (military and financial) and **counsel** (attending courts).",
+                    doc_ref: "Document 11", page_ref: "p. 55",
+                    a_detailed_fr: "Le vassal doit à son seigneur l'**aide** et le **conseil**. L'aide est principalement militaire (service armé, chevauchée, garde du château) mais aussi financière (par exemple pour la rançon du seigneur). Le conseil consiste à assister le seigneur lors des assemblées et des tribunaux, l'aidant à rendre la justice et à prendre des décisions.",
+                    a_detailed_en: "The vassal owes his lord **aid** and **counsel**. Aid is primarily military (armed service, raiding, castle guard) but also financial (for example, for the lord's ransom). Counsel involves assisting the lord at assemblies and courts, helping him dispense justice and make decisions."
+                },
+                {
+                    q_fr: "Quel est le rôle du château fort à l'époque féodale ?",
+                    q_en: "What is the role of the fortified castle in the feudal era?",
+                    a_fr: "C'est le symbole du pouvoir du seigneur, sa résidence et un **refuge** pour les paysans.",
+                    "a_en": "It is the symbol of the lord's power, his residence, and a **refuge** for the peasants.",
+                    doc_ref: "Document 11", page_ref: "p. 58",
+                    a_detailed_fr: "Le château fort est le centre du pouvoir seigneurial. Il est la résidence du seigneur, mais surtout le lieu à partir duquel il exerce son pouvoir de commandement (droit de ban). En période de crise ou d'invasion, la forteresse offre une **protection** essentielle aux paysans vivant sur les terres du seigneur, qui pouvaient s'y réfugier.",
+                    a_detailed_en: "The fortified castle is the center of seigneurial power. It is the lord's residence, but most importantly, the place from which he exercises his power of command (right of ban). During times of crisis or invasion, the fortress offers essential **protection** to the peasants living on the lord's lands, who could take refuge there. [Image of a medieval motte-and-bailey castle]"
+                }
+            ]
+        };
+
+        let currentTopic = Object.keys(flashcardData)[0]; // Default to the first topic
+        let currentCardIndex = 0;
+        const cardDisplayArea = document.getElementById('card-display-area');
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn'); // New button
+        const progressIndicator = document.getElementById('progress-indicator');
+        const modal = document.getElementById('explanation-modal');
+        const modalContent = document.getElementById('modal-content');
+        const langSelector = document.getElementById('language-selector');
+
+        // Stores the currently displayed card's data for modal use
+        let activeCardData = null; 
+
+        // --- Utility Functions ---
+
+        /**
+         * Renders the modal content based on the selected language.
+         * @param {string} lang - 'fr' or 'en'.
+         */
+        function renderModalContent(lang) {
+            if (!activeCardData) return;
+
+            const title = lang === 'fr' ? 'Explication Détaillée' : 'Detailed Explanation';
+            const content = lang === 'fr' ? activeCardData.a_detailed_fr : activeCardData.a_detailed_en;
+            
+            // Update modal title
+            modal.querySelector('h2').textContent = title;
+
+            // Simple Markdown-like replacement for bold text (**)
+            const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            modalContent.innerHTML = formattedContent;
+        }
+
+        /**
+         * Opens the detailed explanation modal.
+         * @param {object} card - The data for the current card.
+         */
+        function openModal(card) {
+            activeCardData = card;
+            // Default to French when opening the modal
+            langSelector.value = 'fr'; 
+            renderModalContent('fr');
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Closes the detailed explanation modal.
+         */
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        // Event listener for language selector change
+        langSelector.addEventListener('change', (e) => {
+            renderModalContent(e.target.value);
+        });
+
+        // Expose to global scope for HTML inline onclick
+        window.closeModal = closeModal; 
+        
+        // Function to create an interactive flashcard element
+        function createCard(card) {
+            // Remove any existing card to ensure only one is visible
+            cardDisplayArea.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.id = 'current-card';
+            container.className = 'card-container w-full h-full perspective-1000 cursor-pointer';
+
+            // Click listener to flip the card
+            container.onclick = (e) => {
+                // Only flip if the clicked element is NOT the detail button
+                if (!e.target.closest('#detail-btn')) {
+                    container.classList.toggle('flipped');
+                }
+            };
+            
+            const face = document.createElement('div');
+            face.className = 'card-face relative w-full h-full rounded-2xl shadow-xl hover:shadow-2xl';
+
+            // Front (Question)
+            const front = document.createElement('div');
+            front.className = 'card-front absolute w-full h-full bg-indigo-600 text-white p-6 rounded-2xl flex flex-col justify-center items-center text-center transition-transform duration-700 ease-in-out border-4 border-indigo-600';
+            front.innerHTML = `
+                <div class="absolute top-4 left-4 text-sm font-light opacity-90 p-1 bg-indigo-700 rounded-lg">
+                    ${card.doc_ref} | ${card.page_ref}
+                </div>
+                <p class="text-xl font-bold mb-4">QUESTION</p>
+                <p class="text-3xl font-extrabold px-4">${card.q_fr}</p>
+                <p class="translation text-sm text-opacity-70 mt-4 px-4">${card.q_en}</p>
+                <p class="absolute bottom-4 text-xs font-medium opacity-80">Cliquez pour révéler la réponse</p>
+            `;
+
+            // Back (Answer)
+            const back = document.createElement('div');
+            back.className = 'card-back w-full h-full bg-white text-gray-900 p-6 rounded-2xl flex flex-col justify-center items-center text-center transition-transform duration-700 ease-in-out border-4 border-indigo-600';
+            
+            // Simplified Answer Content
+            back.innerHTML = `
+                <div class="absolute top-4 left-4 text-sm font-light text-indigo-700 p-1 bg-indigo-100 rounded-lg">
+                    ${card.doc_ref} | ${card.page_ref}
+                </div>
+                <p class="text-xl font-bold mb-4 text-indigo-700">RÉPONSE SIMPLE</p>
+                <p class="text-2xl font-semibold mb-4 px-4">${card.a_fr}</p>
+                <p class="translation text-gray-500 text-sm mt-4 mb-6 px-4">${card.a_en}</p>
+                
+                <!-- Detail Button -->
+                <button id="detail-btn" class="px-4 py-2 bg-pink-500 text-white rounded-lg font-semibold text-sm hover:bg-pink-600 transition shadow-md mt-4">
+                    Voir l'Explication Détaillée / View Details
+                </button>
+
+                <p class="absolute bottom-4 text-xs font-medium opacity-80">Cliquez sur la carte pour cacher la réponse.</p>
+            `;
+            
+            face.appendChild(front);
+            face.appendChild(back);
+            container.appendChild(face);
+
+            cardDisplayArea.appendChild(container);
+
+            // Add listener to the detail button (needs to be done after the button is in the DOM)
+            const detailBtn = document.getElementById('detail-btn');
+            if (detailBtn) {
+                detailBtn.addEventListener('click', (e) => {
+                    // Stop event from propagating to the card container (which would flip it)
+                    e.stopPropagation(); 
+                    openModal(card);
+                });
+            }
+
+            updateControls();
+        }
+
+        // Function to render the single card for the current index and topic
+        function renderCard() {
+            closeModal(); // Close modal when changing cards
+            const cards = flashcardData[currentTopic];
+            if (cards && cards.length > 0) {
+                // Circular logic: ensure index stays within bounds, though it shouldn't be needed with the button logic
+                currentCardIndex = Math.max(0, Math.min(currentCardIndex, cards.length - 1)); 
+                
+                createCard(cards[currentCardIndex]);
+                
+                // Update progress indicator
+                progressIndicator.textContent = `Sujet : ${currentTopic} | Question ${currentCardIndex + 1} / ${cards.length}`;
+            } else {
+                cardDisplayArea.innerHTML = '<p class="text-center text-xl text-gray-500 mt-20">Aucune carte trouvée pour ce sujet.</p>';
+                progressIndicator.textContent = '';
+                nextBtn.disabled = true;
+                prevBtn.disabled = true;
+            }
+        }
+        
+        // Function to update Controls (disable Previous button on first card, Next on last card)
+        function updateControls() {
+            const cards = flashcardData[currentTopic];
+            if (!cards || cards.length === 0) return;
+
+            // Disable Prev button if on the first card
+            prevBtn.disabled = currentCardIndex === 0;
+
+            // Disable Next button if on the last card
+            // We use the circular logic in the event listener instead, but we disable it if we only want pagination
+            // Let's keep the circular logic for continuous flow, so we only disable the Prev button
+            // If the user wants strict pagination without looping, the logic needs to change.
+            // For now, let's keep the loop for Next but disable Prev on the first card.
+            // If we want strict pagination, Next should be disabled when currentCardIndex === cards.length - 1
+            
+            // To implement strict pagination (no loop):
+            // nextBtn.disabled = currentCardIndex === cards.length - 1; 
+
+            // To implement infinite loop:
+            nextBtn.disabled = false;
+        }
+
+        // Function to handle topic change
+        function changeTopic(newTopic) {
+            currentTopic = newTopic;
+            currentCardIndex = 0; // Reset index when changing topic
+            renderTabs();
+            renderCard();
+        }
+
+        // Function to render the navigation tabs
+        function renderTabs() {
+            const navTabs = document.getElementById('nav-tabs');
+            navTabs.innerHTML = '';
+
+            Object.keys(flashcardData).forEach(topic => {
+                const button = document.createElement('button');
+                const isActive = topic === currentTopic;
+                
+                button.textContent = topic;
+                button.className = `
+                    px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-md 
+                    ${isActive
+                        ? 'bg-indigo-600 text-white transform scale-105 ring-4 ring-indigo-300'
+                        : 'bg-gray-100 text-gray-700 hover:bg-indigo-100 hover:text-indigo-600'
+                    }
+                `;
+                button.addEventListener('click', () => changeTopic(topic));
+                navTabs.appendChild(button);
+            });
+        }
+
+        // Event listener for the 'Next' button (with circular loop logic)
+        nextBtn.addEventListener('click', () => {
+            const cards = flashcardData[currentTopic];
+            if (cards && cards.length > 0) {
+                // Circular logic: Increment index, and use the modulo operator (%) to loop back to 0
+                currentCardIndex = (currentCardIndex + 1) % cards.length;
+                renderCard();
+            }
+        });
+
+        // Event listener for the 'Previous' button
+        prevBtn.addEventListener('click', () => {
+            const cards = flashcardData[currentTopic];
+            if (cards && cards.length > 0) {
+                currentCardIndex = currentCardIndex - 1;
+                if (currentCardIndex < 0) {
+                    // Loop back to the last card if going before the first
+                    currentCardIndex = cards.length - 1; 
+                }
+                renderCard();
+            }
+        });
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTabs();
+            renderCard(); // Initial rendering of the first card
+        });
+    </script>
+
+</body>
+</html>
